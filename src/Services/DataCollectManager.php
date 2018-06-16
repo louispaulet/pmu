@@ -93,7 +93,9 @@ class DataCollectManager
         $dailyData = null;
         for ($row = 1; $row < self::ROW; $row++){
             for ($column = 1; $column < self::COLUMN; $column++){
-                $this->call($this->address . '/' . $dateFormat . '/R' . $row . '/C' . $column);
+                $data = $this->call($this->address . '/' . $dateFormat . '/R' . $row . '/C' . $column);
+                var_dump(json_decode($data));
+                die();
             }
         }
 
@@ -110,7 +112,7 @@ class DataCollectManager
         $client = new \GuzzleHttp\Client();
         $res = $client->get($address);
 
-        if we have a valid response
+//        if we have a valid response
         if ($res->getStatusCode() == 200) {
             return $res->getBody()->getContents();
 

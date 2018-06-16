@@ -3,14 +3,12 @@
 namespace App\Command;
 
 use App\Services\DataCollectManager;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class DataCollectCommand extends Command
+class DataCollectCommand extends ContainerAwareCommand
 {
     protected static $defaultName = 'data:collect';
 
@@ -30,7 +28,7 @@ class DataCollectCommand extends Command
 
         $fileLocation = __DIR__;
 
-        $address = 'nothing';
+        $address = $this->getContainer()->getParameter('address');
 
         $dataCollectManager = new DataCollectManager($year, $month, $day, $fileLocation, $address);
         $dataCollectManager->getData($io);
