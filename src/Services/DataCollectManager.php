@@ -73,7 +73,10 @@ class DataCollectManager
 
             $io->text($dateFormat);
 
+            //returns filename => jsonData
             $dailyData = $this->getDailyData($dateFormat);
+
+            $this->saveDailyData($dailyData);
 
             //increment section
             $date->add(new \DateInterval('P1D'));
@@ -83,24 +86,27 @@ class DataCollectManager
 
     }
 
-        //https://www.pmu.fr/turf/01042014/R1/C1
-        //
-        //R = [1...5]
-        //C = [1...9]
-
+    //R = [1...5]
+    //C = [1...9]
+    /**
+     * @param string $dateFormat
+     * @return array
+     */
     public function getDailyData($dateFormat)
     {
-        $dailyData = null;
+        $dailyData = [];
         for ($row = 1; $row < self::ROW; $row++){
             for ($column = 1; $column < self::COLUMN; $column++){
-                $data = $this->call($this->address . '/' . $dateFormat . '/R' . $row . '/C' . $column);
-                var_dump(json_decode($data));
-                die();
+                $dailyData[$this->urlToFilename($this->address) . '-' . $dateFormat . '-R' . $row . '-C' . $column] = $this->call($this->address . '/' . $dateFormat . '/R' . $row . '/C' . $column);
             }
         }
-
         return $dailyData;
+    }
 
+    public function urlToFilename($url)
+    {
+        $filename = //TODO : fileName
+        return $filename;
     }
 
     /**
@@ -120,6 +126,21 @@ class DataCollectManager
             return null;
         }
 
+    }
+
+    public function saveDailyData($dailyData)
+    {
+        $location = __DIR__;
+        foreach ($dailyData as $fileName => $data){
+
+            $this->saveToJson($location . $fileName, $data);
+        }
+    }
+
+    public function saveToJson($location, $data)
+    {
+        var_dump($location);
+        die();
     }
 
     /**
