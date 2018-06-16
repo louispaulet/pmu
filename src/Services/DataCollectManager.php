@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Filesystem\Filesystem;
 
 class DataCollectManager
 {
@@ -35,6 +36,88 @@ class DataCollectManager
      */
     private $day;
 
+    private $internalCounter;
+
+    /**
+     * @return string
+     */
+    public function getFileLocation(): string
+    {
+        return $this->fileLocation;
+    }
+
+    /**
+     * @param string $fileLocation
+     */
+    public function setFileLocation(string $fileLocation)
+    {
+        $this->fileLocation = $fileLocation;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAddress(): string
+    {
+        return $this->address;
+    }
+
+    /**
+     * @param string $address
+     */
+    public function setAddress(string $address)
+    {
+        $this->address = $address;
+    }
+
+    /**
+     * @return string
+     */
+    public function getYear(): string
+    {
+        return $this->year;
+    }
+
+    /**
+     * @param string $year
+     */
+    public function setYear(string $year)
+    {
+        $this->year = $year;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMonth(): string
+    {
+        return $this->month;
+    }
+
+    /**
+     * @param string $month
+     */
+    public function setMonth(string $month)
+    {
+        $this->month = $month;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDay(): string
+    {
+        return $this->day;
+    }
+
+    /**
+     * @param string $day
+     */
+    public function setDay(string $day)
+    {
+        $this->day = $day;
+    }
+
     /**
      * DataCollectManager constructor.
      * @param null $year
@@ -52,11 +135,9 @@ class DataCollectManager
         $this->day = $day;
     }
 
-    private function createRequestAddress(\DateTime $date)
-    {
-
-    }
-
+    /**
+     * @param SymfonyStyle $io
+     */
     public function getData(SymfonyStyle $io)
     {
         $date = new \DateTime();
@@ -64,25 +145,23 @@ class DataCollectManager
         $currentDate = new \DateTime();
 
         $deltaYears = $currentDate->diff($date);
-
-        var_dump($deltaYears->y);
-
         while ($deltaYears->y != 0 || $deltaYears->m != 0 || $deltaYears->d != 0) {
 
             $dateFormat = $date->format('dmY');
 
-            $io->text($dateFormat);
-
             //returns filename => jsonData
-            $dailyData = $this->getDailyData($dateFormat);
+            $dailyData = $this->getDailyData($dateFormat, $io);
 
-            $this->saveDailyData($dailyData);
+            $dateFormat2 = $date->format('Ymd');
+            $filesystem = new Filesystem();
+            $filesystem->mkdir(__DIR__.'\\'.$dateFormat2);
+            $this->saveDailyData($dailyData, $dateFormat, $io);
 
             //increment section
             $date->add(new \DateInterval('P1D'));
             $deltaYears = $deltaYears = $currentDate->diff($date);
-        }
 
+        }
 
     }
 
@@ -90,23 +169,41 @@ class DataCollectManager
     //C = [1...9]
     /**
      * @param string $dateFormat
+     * @param SymfonyStyle $io
      * @return array
      */
-    public function getDailyData($dateFormat)
+    public function getDailyData($dateFormat, SymfonyStyle $io)
     {
+        if ($this->internalCounter == null){
+            $this->internalCounter = 1;
+        }else{
+            $this->internalCounter++;
+        }
+        $io->section($this->internalCounter.' - Retrieving daily data for ' . $dateFormat);
         $dailyData = [];
+        $io->progressStart();
         for ($row = 1; $row < self::ROW; $row++){
             for ($column = 1; $column < self::COLUMN; $column++){
+                //first call
                 $dailyData[$this->urlToFilename($this->address) . '-' . $dateFormat . '-R' . $row . '-C' . $column] = $this->call($this->address . '/' . $dateFormat . '/R' . $row . '/C' . $column);
+
+                //second call
+                $secondAddress ='participants';
+                $dailyData[$this->urlToFilename($this->address) . '-' . $dateFormat . '-R' . $row . '-C' . $column . $secondAddress] = $this->call($this->address . '/' . $dateFormat . '/R' . $row . '/C' . $column . '/' . $secondAddress);
+                $io->progressAdvance();
             }
         }
+        $io->progressFinish();
         return $dailyData;
     }
 
+    /**
+     * @param string $url
+     * @return string
+     */
     public function urlToFilename($url)
     {
-        $filename = //TODO : fileName
-        return $filename;
+        return preg_replace('/[\/,.:?]*/i', '', $url);
     }
 
     /**
@@ -116,9 +213,14 @@ class DataCollectManager
     public function call($address)
     {
         $client = new \GuzzleHttp\Client();
-        $res = $client->get($address);
+        try{
 
-//        if we have a valid response
+            $res = $client->get($address);
+        }catch(\Exception $e){
+            return $e->getMessage();
+        }
+
+//      //if we have a valid response
         if ($res->getStatusCode() == 200) {
             return $res->getBody()->getContents();
 
@@ -128,52 +230,28 @@ class DataCollectManager
 
     }
 
-    public function saveDailyData($dailyData)
+    /**
+     * @param array $dailyData
+     * @param string $folderName
+     * @param SymfonyStyle $io
+     */
+    public function saveDailyData($dailyData, $folderName, SymfonyStyle $io)
     {
+        $io->success('Saving daily data for '.$folderName);
         $location = __DIR__;
         foreach ($dailyData as $fileName => $data){
-
-            $this->saveToJson($location . $fileName, $data);
+            $this->saveToJson($location . '\\' . $folderName . '\\' . $fileName, $data);
         }
     }
 
+    /**
+     * @param string $location
+     * @param string $data
+     */
     public function saveToJson($location, $data)
     {
-        var_dump($location);
-        die();
+        $location = $location . ".json";
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($location, $data);
     }
-
-    /**
-     * @return string
-     */
-    public function getFileLocation()
-    {
-        return $this->fileLocation;
-    }
-
-    /**
-     * @param string $fileLocation
-     */
-    public function setFileLocation($fileLocation)
-    {
-        $this->fileLocation = $fileLocation;
-    }
-
-    /**
-     * @return string
-     */
-    public function getAddress()
-    {
-        return $this->address;
-    }
-
-    /**
-     * @param string $address
-     */
-    public function setAddress($address)
-    {
-        $this->address = $address;
-    }
-
-
 }
