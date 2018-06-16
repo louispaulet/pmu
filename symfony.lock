@@ -1,9 +1,27 @@
 {
+    "doctrine/inflector": {
+        "version": "v1.3.0"
+    },
+    "guzzlehttp/guzzle": {
+        "version": "6.3.3"
+    },
+    "guzzlehttp/promises": {
+        "version": "v1.3.1"
+    },
+    "guzzlehttp/psr7": {
+        "version": "1.4.2"
+    },
+    "nikic/php-parser": {
+        "version": "v4.0.2"
+    },
     "psr/cache": {
         "version": "1.0.1"
     },
     "psr/container": {
         "version": "1.0.0"
+    },
+    "psr/http-message": {
+        "version": "1.0.1"
     },
     "psr/log": {
         "version": "1.0.2"
@@ -70,6 +88,15 @@
     },
     "symfony/lts": {
         "version": "4-dev"
+    },
+    "symfony/maker-bundle": {
+        "version": "1.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "master",
+            "version": "1.0",
+            "ref": "fadbfe33303a76e25cb63401050439aa9b1a9c7f"
+        }
     },
     "symfony/polyfill-mbstring": {
         "version": "v1.8.0"
