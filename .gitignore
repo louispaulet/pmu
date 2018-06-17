@@ -7,4 +7,5 @@
 /vendor/
 ###< symfony/framework-bundle ###
 
+/.idea/
 /config/*
